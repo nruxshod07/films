@@ -1,73 +1,95 @@
-/* Задания на урок:
-
-1) Удалить все рекламные блоки со страницы (правая часть сайта)
-
-2) Изменить жанр фильма, поменять "комедия" на "драма"
-
-3) Изменить задний фон постера с фильмом на изображение "bg.jpg". Оно лежит в папке img.
-Реализовать только при помощи JS
-
-4) Список фильмов на странице сформировать на основании данных из этого JS файла.
-Отсортировать их по алфавиту 
-
-5) Добавить нумерацию выведенных фильмов */
-
-"use strict";
-
 import { movies } from "./db.js";
 
-let bgImage = document.querySelector(".promo__bg");
-let ads = document.querySelector(".promo__adv");
-let genre = document.querySelector(".promo__genre");
+let promo__interactive = document.querySelector(".promo__interactive-list");
+let bac = document.querySelector(".promo__bg");
+let gen = document.querySelector(".promo__genre");
 let title = document.querySelector(".promo__title");
-let description = document.querySelector(".promo__descr");
-let rate = document.querySelector(".promo__ratings span");
-let id;
+let text = document.querySelector(".promo__descr");
+let inp_search = document.querySelector("#search");
 
-ads.innerHTML = "";
+// let compStyle = window.getComputedStyle(inp_search.parentElement)
+// let afterElement = compStyle.getPropertyValue(':after')
 
-bgImage.style.backgroundImage = "url(./img/bg.jpg)";
+inp_search.onkeyup = (e) => {
+  let val = inp_search.value.toLowerCase().trim();
 
-let ul = document.querySelector(".promo__interactive-list");
+  let filtered = movies.filter((item) => {
+    let { Title } = item;
 
-let names = [];
+    if (Title.toLowerCase().includes(val)) {
+      return item;
+    }
+  });
 
-movies.forEach((movie) => {
-  names.push(movie.Title);
-});
+  reload(filtered);
+};
 
-for (let i = 0; i < names.length; i++) {
-  let number = document.createElement("p");
+reload(movies);
+
+function reload(data) {
+  promo__interactive.innerHTML = "";
+  setMovie(data[0]);
+
+  for (let item of data) {
+    let idx = data.indexOf(item) + 1;
+
+    let li = document.createElement("li");
+    let dele = document.createElement("div");
+
+    li.classList.add("promo__interactive-item");
+    dele.classList.add("delete");
+
+    li.innerHTML = `${idx}. ${item.Title.slice(0, 20)}`;
+
+    li.append(dele);
+    promo__interactive.append(li);
+
+    dele.onclick = () => {
+      let idx = data.indexOf(item);
+      data.splice(idx, 1);
+      console.log(data);
+    };
+
+    li.onclick = () => {
+      setMovie(item);
+    };
+  }
+}
+
+let arr = [];
+for (let i = 0; i < movies.length; i++) {
+  arr.push(movies[i].Genre);
+}
+arr = [...new Set(arr)];
+console.log(arr);
+
+function setMovie(item) {
+  bac.style.backgroundImage = `url("${item.Poster}")`;
+  gen.innerHTML = item.Genre;
+  title.innerHTML = item.Title;
+  text.innerHTML = item.Plot;
+}
+let genreLinks = [];
+let genresUl = document.querySelector(".promo__menu-list ul");
+for (let i = 0; i < arr.length; i++) {
   let li = document.createElement("li");
-  let liTitle = document.createElement("p");
-  let deleteButton = document.createElement("div");
+  let a = document.createElement("a");
+  genreLinks.push(a);
 
-  li.classList.add("promo__interactive-item");
-  deleteButton.classList.add("delete");
+  a.classList.add("promo__menu-item");
+  a.href = "#";
 
-  liTitle.innerHTML = movies[i].Title;
+  a.innerHTML = arr[i];
 
-  number.innerHTML = i + 1;
-  li.style.cursor = "pointer";
-  ul.append(li);
-  li.prepend(number, liTitle);
-  li.append(deleteButton);
-
-  li.style.display = "flex";
-  li.style.gap = "10px";
-
-  bgImage.classList.add("promo__bg");
-
-  liTitle.onclick = () => {
-    bgImage.style.backgroundImage = `url(${movies[i].Poster})`;
-    title.innerHTML = movies[i].Title;
-    description.innerHTML = movies[i].Plot;
-    rate.innerHTML = `ImDb: ${movies[i].imdbRating}`;
-    genre.innerHTML = movies[i].Genre;
-  };
-  deleteButton.onclick = () => {
-    li.remove();
-    console.log(movies.splice(movies.indexOf(movies[i]), 1));
-    console.log(movies);
+  genresUl.prepend(a);
+  a.onclick = () => {
+    genreLinks.forEach((a) => {
+      a.classList.remove("promo__menu-item_active");
+    });
+    a.classList.add("promo__menu-item_active");
+    let clickedGenre = a.innerHTML;
+    let filteredGenres = movies.filter((movie) => movie.Genre === clickedGenre);
+    console.log(filteredGenres);
+    reload(filteredGenres);
   };
 }
